@@ -202,7 +202,7 @@ class mixing_erasing(object):
                 return img
         return img
 
-
+#这里market1501不是字是因为他前面被导入了 代表的是market1501这个类
 __factory = {
     'market1501': Market1501,
     'cuhk03': CUHK03,
@@ -239,7 +239,7 @@ def make_dataloader(cfg):
                                 mean=cfg.INPUT.PIXEL_MEAN,
                                 type='self',
                                 mixing_coeff=cfg.INPUT.MIXING_COEFF)
-
+    # if the difference of augmix is only  augmix_transform() . don't know the usage yet
     if cfg.INPUT.AUGMIX:
         train_transforms = T.Compose([
             T.Resize(cfg.INPUT.SIZE_TRAIN, interpolation=3),
@@ -257,7 +257,7 @@ def make_dataloader(cfg):
             T.RandomCrop(cfg.INPUT.SIZE_TRAIN),
             T.ToTensor(), random_erasing, re_erasing
         ])
-
+    # Guess: compose is an offical combnation function.
     val_transforms = T.Compose([
         T.Resize(cfg.INPUT.SIZE_TEST),
         T.ToTensor(),
@@ -270,7 +270,7 @@ def make_dataloader(cfg):
     ])
 
     num_workers = cfg.DATALOADER.NUM_WORKERS
-
+    #这里的dataset也是一个类，因为导入了market1501这个类了
     dataset = __factory[cfg.DATASETS.NAMES](root=cfg.DATASETS.ROOT_DIR)
 
     train_set = ImageDataset(dataset.train, train_transforms, cfg=cfg)
@@ -310,12 +310,17 @@ def make_dataloader(cfg):
     # val_set = ImageDataset(dataset.query + dataset.gallery, val_transforms)
     query_set = ImageDataset(dataset.query, val_transforms)
     gallery_set = ImageDataset(dataset.gallery, val_transforms)
+    #这里已经吧破图片包裹起来了
+    #corrupted_query_set.dataset 是一个列表。里面是图片的地址。应该还没有读进去
     corrupted_query_set = ImageDataset(dataset.query, val_with_corruption_transforms)
     corrupted_gallery_set = ImageDataset(dataset.gallery, val_with_corruption_transforms)
 
     val_set = torch.utils.data.ConcatDataset([query_set, gallery_set])
+    # query and gallery all corrupted
     corrupted_val_set = torch.utils.data.ConcatDataset([corrupted_query_set, corrupted_gallery_set])
+    # query is corrupted
     corrupted_query_set = torch.utils.data.ConcatDataset([corrupted_query_set, gallery_set])
+    #gallery is corrupted
     corrupted_gallery_set = torch.utils.data.ConcatDataset([query_set, corrupted_gallery_set])
 
     val_loader = DataLoader(val_set,
